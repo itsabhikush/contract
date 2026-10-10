@@ -3,7 +3,12 @@
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["netlify/functions/Form_GST.docx", "Form_GST.docx"]
+  included_files = [
+    "netlify/functions/Form_GST.docx",
+    "netlify/functions/Form_NGST.docx",
+    "Form_GST.docx",
+    "Form_NGST.docx"
+  ]
 
 [[redirects]]
   from = "/generate"

@@ -3,20 +3,20 @@ const path = require('path');
 const PizZip = require('pizzip');
 const Busboy = require('busboy');
 
-function getTemplatePath() {
+function getTemplatePath(contractType) {
+  const filename = contractType === 'NGST' ? 'Form_NGST.docx' : 'Form_GST.docx';
   const candidates = [
-    path.join(__dirname, 'Form_GST.docx'),
-    path.join(__dirname, '..', '..', 'Form_GST.docx'),
-    path.join(process.cwd(), 'netlify', 'functions', 'Form_GST.docx'),
-    path.join(process.cwd(), 'Form_GST.docx')
+    path.join(__dirname, filename),
+    path.join(__dirname, '..', '..', filename),
+    path.join(process.cwd(), 'netlify', 'functions', filename),
+    path.join(process.cwd(), filename),
+    path.join(process.cwd(), contractType === 'NGST' ? 'formet NGST.docx' : 'Form_GST.docx')
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
   }
-  return path.join(__dirname, 'Form_GST.docx');
+  return path.join(__dirname, filename);
 }
-
-const TEMPLATE_PATH = getTemplatePath();
 
 // ── Date formatter ──────────────────────────────────────────────────────────
 function formatDate(dateStr) {
@@ -45,8 +45,8 @@ function replaceInXml(xml, token, value) {
 // ── ANNEXURE E cell updater ─────────────────────────────────────────────────
 function setCellValue(cellXml, value) {
   if (!value) return cellXml.replace(/<w:t[^>]*>[^<]*<\/w:t>/g, '<w:t></w:t>');
-  const escaped = value.replace(/&/g,'&amp;');
-  if (/<w:t/.test(cellXml))
+  const escaped = value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (/<w:t[ >]/.test(cellXml))
     return cellXml.replace(/<w:t[^>]*>[^<]*<\/w:t>/g, `<w:t>${escaped}</w:t>`);
   return cellXml.replace('</w:p>', `<w:r><w:t>${escaped}</w:t></w:r></w:p>`);
 }
@@ -124,26 +124,49 @@ exports.handler = async function(event) {
     const { fields, files } = await parseMultipart(event);
 
     const {
-      DATE, GST_NO, GST_ADDRESS, OWNER_NAME, TRADE_NAME,
+      contractType,
+      DATE, GST_NO, GST_ADDRESS,
+      PAN_NO, PAN_ADDRESS, ADHAR_ADDRESS,
+      OWNER_NAME, TRADE_NAME,
       HOTEL_NAME, HOTEL_ADDRESS, INVENTRY,
       LAT_D, LONG_D, MOBILE_NO, LANDLINE_NO, EMAIL_ADD,
       GUESTS_LOCAL_ID, UNMARRIED_COUPLE, FOREIGNER
     } = fields;
 
+    const isNGST = contractType === 'NGST';
+    const templatePath = getTemplatePath(isNGST ? 'NGST' : 'GST');
+
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Template not found at ${templatePath}`);
+    }
+
     const formattedDate = formatDate(DATE);
-    const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
+    const content = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(content);
 
     let docXml = zip.file('word/document.xml').asText();
 
     const replacements = {
-      DATE: formattedDate, GST_NO, GST_ADDRESS, OWNER_NAME, TRADE_NAME,
-      HOTEL_NAME, HOTEL_ADDRESS, INVENTRY,
-      LAT_D, LONG_D, MOBILE_NO, LANDLINE_NO, EMAIL_ADD,
+      'DATE': formattedDate,
+      'GST_NO': GST_NO || '',
+      'GST_ADDRESS': GST_ADDRESS || '',
+      'PAN_NO': PAN_NO || '',
+      'PAN_ADDRESS': PAN_ADDRESS || '',
+      'ADHAR_ADDRESS': ADHAR_ADDRESS || '',
+      'OWNER_NAME': OWNER_NAME || '',
+      'TRADE_NAME': TRADE_NAME || '',
+      'HOTEL_NAME': HOTEL_NAME || '',
+      'HOTEL_ADDRESS': HOTEL_ADDRESS || '',
+      'INVENTRY': INVENTRY || '',
+      'LAT_D': LAT_D || '',
+      'LONG_D': LONG_D || '',
+      'MOBILE_NO': MOBILE_NO || '',
+      'LANDLINE_NO': LANDLINE_NO || '',
+      'EMAIL_ADD': EMAIL_ADD || '',
     };
 
     for (const [token, value] of Object.entries(replacements)) {
-      docXml = replaceInXml(docXml, token, value || '');
+      docXml = replaceInXml(docXml, token, value);
     }
 
     docXml = updateAnnexureETable(docXml, GUESTS_LOCAL_ID || '', UNMARRIED_COUPLE || '', FOREIGNER || '');
@@ -153,19 +176,20 @@ exports.handler = async function(event) {
     Object.keys(zip.files).filter(f => f.startsWith('word/footer')).forEach(fFile => {
       let fXml = zip.file(fFile).asText();
       for (const [token, value] of Object.entries(replacements)) {
-        fXml = replaceInXml(fXml, token, value || '');
+        fXml = replaceInXml(fXml, token, value);
       }
       zip.file(fFile, fXml);
     });
 
-    // Replace hotel photo if uploaded
-    if (files.hotelPhoto && files.hotelPhoto.buffer.length > 0) {
+    // Replace hotel photo if uploaded (Annexure C-1: media/image3.png)
+    if (files.hotelPhoto && files.hotelPhoto.buffer && files.hotelPhoto.buffer.length > 0) {
       zip.file('word/media/image3.png', files.hotelPhoto.buffer, { binary: true });
     }
 
     const output = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
     const safeHotel = (HOTEL_NAME || 'Contract').replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
-    const filename  = `Contract_${safeHotel}_${formattedDate}`.replace(/\s+/g,'_') + '.docx';
+    const typeLabel = isNGST ? 'NGST' : 'GST';
+    const filename  = `Contract_${typeLabel}_${safeHotel}_${formattedDate || 'draft'}`.replace(/\s+/g,'_') + '.docx';
 
     return {
       statusCode: 200,

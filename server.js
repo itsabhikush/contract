@@ -9,7 +9,20 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const TEMPLATE_PATH = path.join(__dirname, 'Form_GST.docx');
+function getTemplatePath(contractType) {
+  const filename = contractType === 'NGST' ? 'Form_NGST.docx' : 'Form_GST.docx';
+  const candidates = [
+    path.join(__dirname, filename),
+    path.join(__dirname, 'netlify', 'functions', filename),
+    path.join(process.cwd(), filename),
+    path.join(process.cwd(), 'netlify', 'functions', filename),
+    path.join(process.cwd(), contractType === 'NGST' ? 'formet NGST.docx' : 'Form_GST.docx')
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(__dirname, filename);
+}
 
 // Format date: "2026-10-11" -> "11th October 2026"
 function formatDate(dateStr) {
@@ -17,7 +30,6 @@ function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   if (isNaN(d)) return dateStr;
   const day = d.getDate();
-  // 11, 12, 13 are always "th"; otherwise last digit decides
   let suffix = 'th';
   if (day % 100 < 11 || day % 100 > 13) {
     const lastDigit = day % 10;
@@ -36,28 +48,19 @@ function replaceInXml(xml, token, value) {
 }
 
 // Build a Yes/No/blank cell run XML for the ANNEXURE E table
-// Given the existing cell XML (which has the paragraph/run structure), replace the w:t text content
 function setCellValue(cellXml, value) {
-  // value: 'Yes', 'No', or '' (blank)
   if (!value) {
-    // Remove any w:t content but keep structure
     return cellXml.replace(/<w:t[^>]*>[^<]*<\/w:t>/g, '<w:t></w:t>');
   }
-  const escaped = value.replace(/&/g, '&amp;');
-  // If there's already a w:t, replace it; otherwise inject before </w:r>
-  if (/<w:t/.test(cellXml)) {
+  const escaped = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (/<w:t[ >]/.test(cellXml)) {
     return cellXml.replace(/<w:t[^>]*>[^<]*<\/w:t>/g, `<w:t>${escaped}</w:t>`);
   }
-  // No run exists — inject a run with w:t
   return cellXml.replace('</w:p>', `<w:r><w:t>${escaped}</w:t></w:r></w:p>`);
 }
 
-// Update ANNEXURE E table rows 1-3 (0-indexed, row 0 is header)
-// For each data row, set Yes/No/blank in the Yes column (col index 1) and No column (col index 2)
+// Update ANNEXURE E table rows 1-3
 function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner) {
-  const selections = { guestsLocalId, unmarriedCouple, foreigner };
-
-  // Find the ANNEXURE E table by locating 'Guests with Local ID'
   const anchorIdx = docXml.indexOf('Guests with Local ID');
   if (anchorIdx === -1) return docXml;
 
@@ -69,13 +72,11 @@ function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner)
   const afterTable = docXml.substring(tableEnd);
   let tableXml = docXml.substring(tableStart, tableEnd);
 
-  // Split into rows
   const rowRegex = /<w:tr[ >][\s\S]*?<\/w:tr>/g;
   const rowMatches = [...tableXml.matchAll(rowRegex)];
 
-  if (rowMatches.length < 4) return docXml; // Safety check
+  if (rowMatches.length < 4) return docXml;
 
-  // Process rows 1, 2, 3 (data rows)
   const dataRows = [
     { rowIndex: 1, selection: guestsLocalId },
     { rowIndex: 2, selection: unmarriedCouple },
@@ -87,7 +88,6 @@ function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner)
     if (!rowMatch) continue;
 
     const rowXml = rowMatch[0];
-    // Split row into cells
     const cellRegex = /<w:tc>[\s\S]*?<\/w:tc>/g;
     const cells = [...rowXml.matchAll(cellRegex)];
     if (cells.length < 3) continue;
@@ -95,7 +95,6 @@ function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner)
     const yesVal = selection === 'Yes' ? 'Yes' : '';
     const noVal = selection === 'No' ? 'No' : '';
 
-    // Update Yes cell (index 1) and No cell (index 2)
     let newRowXml = rowXml;
     const originalYesCell = cells[1][0];
     const originalNoCell = cells[2][0];
@@ -114,24 +113,36 @@ function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner)
 app.post('/generate', upload.single('hotelPhoto'), (req, res) => {
   try {
     const {
-      DATE, GST_NO, GST_ADDRESS, OWNER_NAME, TRADE_NAME,
+      contractType,
+      DATE, GST_NO, GST_ADDRESS,
+      PAN_NO, PAN_ADDRESS, ADHAR_ADDRESS,
+      OWNER_NAME, TRADE_NAME,
       HOTEL_NAME, HOTEL_ADDRESS, INVENTRY,
       LAT_D, LONG_D, MOBILE_NO, LANDLINE_NO, EMAIL_ADD,
       GUESTS_LOCAL_ID, UNMARRIED_COUPLE, FOREIGNER
     } = req.body;
 
-    const formattedDate = formatDate(DATE);
+    const isNGST = contractType === 'NGST';
+    const templatePath = getTemplatePath(isNGST ? 'NGST' : 'GST');
 
-    const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Template not found at ${templatePath}`);
+    }
+
+    const formattedDate = formatDate(DATE);
+    const content = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(content);
 
     let docXml = zip.file('word/document.xml').asText();
 
-    // Replace all plain text tokens
+    // Replacements dictionary covering both GST and NGST placeholders
     const replacements = {
       'DATE': formattedDate,
       'GST_NO': GST_NO || '',
       'GST_ADDRESS': GST_ADDRESS || '',
+      'PAN_NO': PAN_NO || '',
+      'PAN_ADDRESS': PAN_ADDRESS || '',
+      'ADHAR_ADDRESS': ADHAR_ADDRESS || '',
       'OWNER_NAME': OWNER_NAME || '',
       'TRADE_NAME': TRADE_NAME || '',
       'HOTEL_NAME': HOTEL_NAME || '',
@@ -153,24 +164,12 @@ app.post('/generate', upload.single('hotelPhoto'), (req, res) => {
 
     zip.file('word/document.xml', docXml);
 
-    // Replace Brand Display photo if uploaded (rId10 = media/image3.png)
-    if (req.file) {
-      const uploadedImageBuffer = req.file.buffer;
-      const uploadedMime = req.file.mimetype; // e.g. image/jpeg, image/png
-
-      // Determine extension
-      const extMap = { 'image/jpeg': 'jpeg', 'image/jpg': 'jpeg', 'image/png': 'png', 'image/webp': 'webp' };
-      const ext = extMap[uploadedMime] || 'png';
-
-      // rId10 points to media/image3.png — replace the file content
-      // Always overwrite image3.png regardless of format (Word will still render it)
-      zip.file('word/media/image3.png', uploadedImageBuffer, { binary: true });
-
-      // If it's not PNG, update the relationship to reflect the new content type
-      // For simplicity, Word is lenient about file extension vs content, so overwriting works fine
+    // Replace Brand Display photo if uploaded (Annexure C-1: media/image3.png)
+    if (req.file && req.file.buffer && req.file.buffer.length > 0) {
+      zip.file('word/media/image3.png', req.file.buffer, { binary: true });
     }
 
-    // Process footers too
+    // Process footers
     const footerFiles = Object.keys(zip.files).filter(f => f.startsWith('word/footer'));
     for (const fFile of footerFiles) {
       let fXml = zip.file(fFile).asText();
@@ -182,7 +181,8 @@ app.post('/generate', upload.single('hotelPhoto'), (req, res) => {
 
     const output = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
     const safeHotelName = (HOTEL_NAME || 'Contract').replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
-    const filename = ('Contract_' + safeHotelName + '_' + (formattedDate || 'draft')).replace(/\s+/g, '_') + '.docx';
+    const typeLabel = isNGST ? 'NGST' : 'GST';
+    const filename = (`Contract_${typeLabel}_${safeHotelName}_${formattedDate || 'draft'}`).replace(/\s+/g, '_') + '.docx';
 
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
