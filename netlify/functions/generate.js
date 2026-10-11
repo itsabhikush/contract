@@ -145,7 +145,8 @@ function buildPlatformFeesTableXml(rows, isNGST) {
       <w:trPr><w:trHeight w:val="841"/></w:trPr>
       <w:tc>
         <w:tcPr><w:tcW w:w="${col1W}" w:type="dxa"/></w:tcPr>
-        <w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Franchisor's Booking Occupancy (%)</w:t></w:r></w:p>
+        <w:p><w:pPr><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Franchisor's Booking</w:t></w:r></w:p>
+        <w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Occupancy (%)</w:t></w:r></w:p>
       </w:tc>
       <w:tc>
         <w:tcPr><w:tcW w:w="${col2W}" w:type="dxa"/></w:tcPr>
@@ -181,8 +182,8 @@ function updateClause71b(docXml, franchisorMargin, franchiseeMargin, includePlat
   // Spacing paragraph
   newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
 
-  // Franchisee margin paragraph
-  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">Reseller margin on Franchisee Bookings = ${escFranchisee}</w:t></w:r></w:p>`;
+  // Franchisee margin paragraph (matching uploaded format: "Reseller margin on Franchisee Bookings= Y%")
+  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">Reseller margin on Franchisee Bookings= ${escFranchisee}</w:t></w:r></w:p>`;
 
   if (includePlatformFees && rows && rows.length > 0) {
     // Spacing paragraph

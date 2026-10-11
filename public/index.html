@@ -593,44 +593,110 @@
       color: var(--muted);
     }
 
-    /* Clause 7.1.b Platform Fee Table Styles */
-    .table-opt-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
+    /* Clause 7.1.b Document Format Styling */
+    .clause-doc-sheet {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 14px;
-      padding: 22px;
-      margin-top: 6px;
-      transition: all 0.3s ease;
+      padding: 26px 28px;
+      color: #e2e8f0;
+      font-size: 14px;
+      line-height: 1.65;
     }
 
-    .table-opt-header {
+    .clause-doc-para {
+      margin-bottom: 18px;
+      text-align: justify;
+      color: #cbd5e1;
+      font-size: 13.5px;
+    }
+
+    .clause-doc-num {
+      font-weight: 700;
+      color: var(--accent2);
+      margin-right: 8px;
+    }
+
+    .clause-doc-title {
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .clause-formula-line {
+      margin: 18px 0;
+      color: #f8fafc;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .clause-margin-line {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #f1f5f9;
       flex-wrap: wrap;
     }
 
-    .table-opt-title {
-      font-size: 15px;
+    .clause-margin-text {
+      white-space: nowrap;
+    }
+
+    .clause-inline-input {
+      width: 110px;
+      padding: 6px 12px;
+      background: var(--input-bg);
+      border: 1px solid rgba(108, 99, 255, 0.4);
+      border-radius: 8px;
+      color: var(--accent2);
       font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      text-align: center;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .clause-inline-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.3);
+      color: #fff;
+    }
+
+    .clause-platform-line {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 22px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .clause-platform-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .clause-table-ask {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
     }
 
-    .table-opt-desc {
+    .ask-text {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.5;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .platform-table-wrapper {
-      margin-top: 20px;
-      padding-top: 18px;
+      margin-top: 14px;
+      padding-top: 16px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       transition: all 0.3s ease;
     }
@@ -1115,38 +1181,50 @@
       <!-- Section 3: Clause 7.1.b Margins & Platform Fees -->
       <div class="card" id="card3">
         <div class="section-title">
-          <div class="icon">📈</div>Clause 7.1.b — Reseller Margin &amp; Platform Fees
-        </div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6;">
-          Specify the Reseller Margins for Franchisor and Franchisee bookings, and optionally configure tiered Platform Fees.
-        </p>
-
-        <!-- Margin Fields -->
-        <div class="grid grid-2" style="margin-bottom:22px;">
-          <div class="field">
-            <label for="RESELLER_MARGIN_FRANCHISOR">Reseller margin on Franchisor Bookings <span class="req">*</span></label>
-            <input type="text" id="RESELLER_MARGIN_FRANCHISOR" name="RESELLER_MARGIN_FRANCHISOR" value="25%" placeholder="e.g. 25%" required />
-            <div class="hint">Reseller margin on Franchisor Bookings = X%</div>
-          </div>
-          <div class="field">
-            <label for="RESELLER_MARGIN_FRANCHISEE">Reseller margin on Franchisee Bookings <span class="req">*</span></label>
-            <input type="text" id="RESELLER_MARGIN_FRANCHISEE" name="RESELLER_MARGIN_FRANCHISEE" value="0%" placeholder="e.g. 0%" required />
-            <div class="hint">Reseller margin on Franchisee Bookings = Y%</div>
-          </div>
+          <div class="icon">📄</div>Clause 7.1.b — Terms &amp; Margin Configuration
         </div>
 
-        <!-- Table Option -->
-        <div class="table-opt-box">
-          <div class="table-opt-header">
+        <div class="clause-doc-sheet">
+          <!-- Main Clause Text -->
+          <div class="clause-doc-para">
+            <span class="clause-doc-num">7.1.b</span>
+            <span class="clause-doc-title">Purchase and Resale of Room Inventory:</span>
+            Upon the Franchisor confirming a booking for the Hotel’s room inventory through the Platform (a “Reseller Booking”), the relevant room-night(s) shall, at the time of such confirmation, be deemed to have been purchased by the Franchisor from the Franchisee at the applicable Net Rate, and the Franchisor shall thereafter resell the same to the customer in its own name at the Net Booking Value. The difference between the Net Booking Value and the Net Rate shall belong to the Franchisor as its reseller margin
+          </div>
+
+          <!-- Formula -->
+          <div class="clause-formula-line">
+            Reseller margin = Reseller margin % * Net Booking Value
+          </div>
+
+          <!-- Reseller margin on Franchisor Bookings -->
+          <div class="clause-margin-line">
+            <span class="clause-margin-text">Reseller margin &nbsp;on Franchisor Bookings =</span>
             <div>
-              <div class="table-opt-title">Platform Fees Table</div>
-              <div class="table-opt-desc">Add Platform fees table from line "Platform fees: Franchisor's Booking Occupancy (%) Platform fees"?</div>
-            </div>
-            <div class="yn-group">
-              <button type="button" class="yn-btn yes active" id="btnTblYes" onclick="togglePlatformTable(true)">✓ Yes</button>
-              <button type="button" class="yn-btn no" id="btnTblNo" onclick="togglePlatformTable(false)">✗ No</button>
+              <input type="text" id="RESELLER_MARGIN_FRANCHISOR" name="RESELLER_MARGIN_FRANCHISOR" value="25%" placeholder="25%" class="clause-inline-input" required />
             </div>
           </div>
+
+          <!-- Reseller margin on Franchisee Bookings -->
+          <div class="clause-margin-line">
+            <span class="clause-margin-text">Reseller margin on Franchisee Bookings=</span>
+            <div>
+              <input type="text" id="RESELLER_MARGIN_FRANCHISEE" name="RESELLER_MARGIN_FRANCHISEE" value="0%" placeholder="0%" class="clause-inline-input" required />
+            </div>
+          </div>
+
+          <!-- Platform fees heading & table toggle -->
+          <div class="clause-platform-line">
+            <span class="clause-platform-title">Platform fees:</span>
+            <div class="clause-table-ask">
+              <span class="ask-text">Add table?</span>
+              <div class="yn-group">
+                <button type="button" class="yn-btn yes active" id="btnTblYes" onclick="togglePlatformTable(true)">✓ Yes</button>
+                <button type="button" class="yn-btn no" id="btnTblNo" onclick="togglePlatformTable(false)">✗ No</button>
+              </div>
+            </div>
+          </div>
+
           <input type="hidden" name="INCLUDE_PLATFORM_FEES" id="INCLUDE_PLATFORM_FEES" value="true" />
           <input type="hidden" name="PLATFORM_FEES_DATA" id="PLATFORM_FEES_DATA" value="" />
 
@@ -1167,8 +1245,11 @@
               <table class="fee-matrix-table" id="feeMatrixTable">
                 <thead>
                   <tr>
-                    <th style="width: 44%;">Franchisor's Booking Occupancy (%)</th>
-                    <th style="width: 46%;">Platform fees</th>
+                    <th style="width: 45%;">
+                      Franchisor's Booking<br />
+                      Occupancy (%)
+                    </th>
+                    <th style="width: 45%;">Platform fees</th>
                     <th style="width: 10%; text-align: center;">Action</th>
                   </tr>
                 </thead>
@@ -1178,7 +1259,7 @@
               </table>
             </div>
             <div class="table-footer-hint">
-              💡 <span>All table cells are manually entered. Multi-line fees (e.g. "+GST") are formatted cleanly in the generated document.</span>
+              💡 <span>All values are manually entered. Cell formatting and multi-line values (e.g. "+GST") directly match the contract template.</span>
             </div>
           </div>
         </div>
