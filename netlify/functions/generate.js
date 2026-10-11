@@ -87,6 +87,120 @@ function updateAnnexureETable(docXml, guestsLocalId, unmarriedCouple, foreigner)
   return beforeTable + tableXml + afterTable;
 }
 
+// ── Format percentage value ─────────────────────────────────────────────────
+function formatPercentage(val) {
+  if (val === undefined || val === null) return '';
+  let s = String(val).trim();
+  if (!s) return '';
+  if (!s.endsWith('%')) s += '%';
+  return s;
+}
+
+// ── Render cell content paragraphs ─────────────────────────────────────────
+function renderCellContent(text) {
+  if (!text) {
+    return `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+  }
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length === 0) lines.push('');
+  return lines.map(line => {
+    const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>${escaped}</w:t></w:r></w:p>`;
+  }).join('');
+}
+
+// ── Build Platform fees table XML ───────────────────────────────────────────
+function buildPlatformFeesTableXml(rows, isNGST) {
+  const col1W = isNGST ? 3386 : 2977;
+  const col2W = isNGST ? 3452 : 3402;
+  const tblIndW = isNGST ? 720 : 1413;
+
+  let rowsXml = '';
+  for (const r of rows) {
+    rowsXml += `<w:tr>
+      <w:trPr><w:trHeight w:val="697"/></w:trPr>
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${col1W}" w:type="dxa"/></w:tcPr>
+        ${renderCellContent(r.occupancy)}
+      </w:tc>
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${col2W}" w:type="dxa"/></w:tcPr>
+        ${renderCellContent(r.fee)}
+      </w:tc>
+    </w:tr>`;
+  }
+
+  return `<w:tbl>
+    <w:tblPr>
+      <w:tblStyle w:val="TableGrid"/>
+      <w:tblW w:w="0" w:type="auto"/>
+      <w:tblInd w:w="${tblIndW}" w:type="dxa"/>
+      <w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="${col1W}"/>
+      <w:gridCol w:w="${col2W}"/>
+    </w:tblGrid>
+    <w:tr>
+      <w:trPr><w:trHeight w:val="841"/></w:trPr>
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${col1W}" w:type="dxa"/></w:tcPr>
+        <w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Franchisor's Booking Occupancy (%)</w:t></w:r></w:p>
+      </w:tc>
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${col2W}" w:type="dxa"/></w:tcPr>
+        <w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Platform fees</w:t></w:r></w:p>
+      </w:tc>
+    </w:tr>
+    ${rowsXml}
+  </w:tbl>`;
+}
+
+// ── Update Clause 7.1.b margins and optional platform fees table ────────────
+function updateClause71b(docXml, franchisorMargin, franchiseeMargin, includePlatformFees, rows, isNGST) {
+  const formulaAnchor = 'Reseller margin % * Net Booking Value';
+  const formulaIdx = docXml.indexOf(formulaAnchor);
+  if (formulaIdx === -1) return docXml;
+
+  const pFormEnd = docXml.indexOf('</w:p>', formulaIdx) + '</w:p>'.length;
+  const tblIdx = docXml.indexOf('<w:tbl>', pFormEnd);
+  if (tblIdx === -1) return docXml;
+
+  const tblEnd = docXml.indexOf('</w:tbl>', tblIdx) + '</w:tbl>'.length;
+
+  const escFranchisor = (formatPercentage(franchisorMargin) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escFranchisee = (formatPercentage(franchiseeMargin) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  let newXml = '';
+  // Spacing paragraph
+  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+
+  // Franchisor margin paragraph
+  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">Reseller margin  on Franchisor Bookings = ${escFranchisor}</w:t></w:r></w:p>`;
+
+  // Spacing paragraph
+  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+
+  // Franchisee margin paragraph
+  newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">Reseller margin on Franchisee Bookings = ${escFranchisee}</w:t></w:r></w:p>`;
+
+  if (includePlatformFees && rows && rows.length > 0) {
+    // Spacing paragraph
+    newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+
+    // Heading "Platform fees:"
+    newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t>Platform fees:</w:t></w:r></w:p>`;
+
+    // Spacing paragraph
+    newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+
+    // Table
+    newXml += buildPlatformFeesTableXml(rows, isNGST);
+  }
+
+  return docXml.substring(0, pFormEnd) + newXml + docXml.substring(tblEnd);
+}
+
 // ── Multipart parser ────────────────────────────────────────────────────────
 function parseMultipart(event) {
   return new Promise((resolve, reject) => {
@@ -130,7 +244,9 @@ exports.handler = async function(event) {
       OWNER_NAME, TRADE_NAME,
       HOTEL_NAME, HOTEL_ADDRESS, INVENTRY,
       LAT_D, LONG_D, MOBILE_NO, LANDLINE_NO, EMAIL_ADD,
-      GUESTS_LOCAL_ID, UNMARRIED_COUPLE, FOREIGNER
+      GUESTS_LOCAL_ID, UNMARRIED_COUPLE, FOREIGNER,
+      RESELLER_MARGIN_FRANCHISOR, RESELLER_MARGIN_FRANCHISEE,
+      INCLUDE_PLATFORM_FEES, PLATFORM_FEES_DATA
     } = fields;
 
     const isNGST = contractType === 'NGST';
@@ -170,6 +286,26 @@ exports.handler = async function(event) {
     }
 
     docXml = updateAnnexureETable(docXml, GUESTS_LOCAL_ID || '', UNMARRIED_COUPLE || '', FOREIGNER || '');
+
+    // Update Clause 7.1.b (Margins and Platform fees table)
+    let parsedTableRows = [];
+    if (PLATFORM_FEES_DATA) {
+      try {
+        parsedTableRows = typeof PLATFORM_FEES_DATA === 'string' ? JSON.parse(PLATFORM_FEES_DATA) : PLATFORM_FEES_DATA;
+      } catch (e) {
+        parsedTableRows = [];
+      }
+    }
+    const shouldIncludeTable = INCLUDE_PLATFORM_FEES === 'true' || INCLUDE_PLATFORM_FEES === 'Yes' || INCLUDE_PLATFORM_FEES === true;
+
+    docXml = updateClause71b(
+      docXml,
+      RESELLER_MARGIN_FRANCHISOR !== undefined && RESELLER_MARGIN_FRANCHISOR !== '' ? RESELLER_MARGIN_FRANCHISOR : '25%',
+      RESELLER_MARGIN_FRANCHISEE !== undefined && RESELLER_MARGIN_FRANCHISEE !== '' ? RESELLER_MARGIN_FRANCHISEE : '0%',
+      shouldIncludeTable,
+      parsedTableRows,
+      isNGST
+    );
     zip.file('word/document.xml', docXml);
 
     // Footer replacements
