@@ -158,7 +158,7 @@ function buildPlatformFeesTableXml(rows, isNGST) {
 }
 
 // ── Update Clause 7.1.b margins and optional platform fees table ────────────
-function updateClause71b(docXml, franchisorMargin, franchiseeMargin, includePlatformFees, rows, isNGST) {
+function updateClause71b(docXml, franchisorMargin, franchiseeMargin, includePlatformFees, rows, isNGST, includeOtaRider, otaRiderVal) {
   const formulaAnchor = 'Reseller margin % * Net Booking Value';
   const formulaIdx = docXml.indexOf(formulaAnchor);
   if (formulaIdx === -1) return docXml;
@@ -178,6 +178,13 @@ function updateClause71b(docXml, franchisorMargin, franchiseeMargin, includePlat
 
   // Franchisor margin paragraph
   newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">Reseller margin  on Franchisor Bookings = ${escFranchisor}</w:t></w:r></w:p>`;
+
+  // Optional OTA Rider line (added after Franchisor Bookings)
+  if (includeOtaRider && otaRiderVal) {
+    const escOtaRider = (formatPercentage(otaRiderVal) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
+    newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:ind w:left="0"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">OTA Rider = ${escOtaRider}</w:t></w:r></w:p>`;
+  }
 
   // Spacing paragraph
   newXml += `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:spacing w:line="200" w:lineRule="atLeast"/><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>`;
@@ -247,6 +254,7 @@ exports.handler = async function(event) {
       LAT_D, LONG_D, MOBILE_NO, LANDLINE_NO, EMAIL_ADD,
       GUESTS_LOCAL_ID, UNMARRIED_COUPLE, FOREIGNER,
       RESELLER_MARGIN_FRANCHISOR, RESELLER_MARGIN_FRANCHISEE,
+      INCLUDE_OTA_RIDER, OTA_RIDER,
       INCLUDE_PLATFORM_FEES, PLATFORM_FEES_DATA
     } = fields;
 
@@ -298,6 +306,7 @@ exports.handler = async function(event) {
       }
     }
     const shouldIncludeTable = INCLUDE_PLATFORM_FEES === 'true' || INCLUDE_PLATFORM_FEES === 'Yes' || INCLUDE_PLATFORM_FEES === true;
+    const shouldIncludeOtaRider = INCLUDE_OTA_RIDER === 'true' || INCLUDE_OTA_RIDER === 'Yes' || INCLUDE_OTA_RIDER === true;
 
     docXml = updateClause71b(
       docXml,
@@ -305,7 +314,9 @@ exports.handler = async function(event) {
       RESELLER_MARGIN_FRANCHISEE !== undefined && RESELLER_MARGIN_FRANCHISEE !== '' ? RESELLER_MARGIN_FRANCHISEE : '0%',
       shouldIncludeTable,
       parsedTableRows,
-      isNGST
+      isNGST,
+      shouldIncludeOtaRider,
+      OTA_RIDER
     );
     zip.file('word/document.xml', docXml);
 

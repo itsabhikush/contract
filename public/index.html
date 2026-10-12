@@ -664,6 +664,67 @@
       color: #fff;
     }
 
+    /* OTA Rider Box */
+    .clause-ota-box {
+      margin: 14px 0 16px;
+      padding: 14px 16px;
+      background: rgba(108, 99, 255, 0.05);
+      border: 1px dashed rgba(108, 99, 255, 0.28);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .clause-ota-box:hover {
+      border-color: rgba(108, 99, 255, 0.45);
+      background: rgba(108, 99, 255, 0.08);
+    }
+
+    .clause-ota-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ota-prompt-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      color: #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    .ota-prompt-text strong {
+      color: var(--accent2);
+    }
+
+    .ota-prompt-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .clause-ota-input-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .clause-ota-input-row.collapsed {
+      display: none !important;
+    }
+
+    .ota-help-text {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-left: 2px;
+    }
+
     .clause-platform-line {
       display: flex;
       justify-content: space-between;
@@ -1047,17 +1108,17 @@
     <div class="steps">
       <div class="step active" id="step1">
         <div class="step-dot">1</div>
-        <div class="step-label" id="step1Label">GST Info</div>
+        <div class="step-label" id="step1Label">GST &amp; Owner</div>
       </div>
       <div class="step-line"></div>
       <div class="step" id="step2">
         <div class="step-dot">2</div>
-        <div class="step-label">Hotel</div>
+        <div class="step-label">Clause 7.1.b</div>
       </div>
       <div class="step-line"></div>
       <div class="step" id="step3">
         <div class="step-dot">3</div>
-        <div class="step-label">Clause 7.1.b</div>
+        <div class="step-label">Hotel</div>
       </div>
       <div class="step-line"></div>
       <div class="step" id="step4">
@@ -1116,13 +1177,8 @@
           </div>
         </div>
 
-        <!-- PAN & Aadhaar Addresses (NGST only) -->
-        <div class="grid grid-2 field-group hidden-field-group" id="groupNgstAddrs" style="margin-bottom:18px;">
-          <div class="field">
-            <label for="PAN_ADDRESS">PAN Registered Address <span class="req">*</span></label>
-            <textarea id="PAN_ADDRESS" name="PAN_ADDRESS"
-              placeholder="Address as registered in PAN records..."></textarea>
-          </div>
+        <!-- Aadhaar Address (NGST only) -->
+        <div class="grid field-group hidden-field-group" id="groupAdharAddr" style="margin-bottom:18px;">
           <div class="field">
             <label for="ADHAR_ADDRESS">Aadhaar Address <span class="req">*</span></label>
             <textarea id="ADHAR_ADDRESS" name="ADHAR_ADDRESS" placeholder="Address as per Aadhaar card..."></textarea>
@@ -1142,44 +1198,8 @@
         </div>
       </div>
 
-      <!-- Section 2: Hotel Details -->
+      <!-- Section 2: Clause 7.1.b Margins & Platform Fees -->
       <div class="card" id="card2">
-        <div class="section-title">
-          <div class="icon">🏨</div>Hotel Details
-        </div>
-        <div class="grid grid-2" style="margin-bottom:18px;">
-          <div class="field">
-            <label for="HOTEL_NAME">Hotel Name <span class="req">*</span></label>
-            <input type="text" id="HOTEL_NAME" name="HOTEL_NAME" placeholder="Hotel / property name" required />
-          </div>
-          <div class="field">
-            <label for="INVENTRY">Inventory (Rooms) <span class="req">*</span></label>
-            <input type="number" id="INVENTRY" name="INVENTRY" placeholder="e.g. 50" min="1" required />
-          </div>
-        </div>
-        <div class="grid" style="margin-bottom:18px;">
-          <div class="field">
-            <label for="HOTEL_ADDRESS">Hotel Address <span class="req">*</span></label>
-            <textarea id="HOTEL_ADDRESS" name="HOTEL_ADDRESS" placeholder="Complete hotel address..."
-              required></textarea>
-          </div>
-        </div>
-        <div class="grid grid-2">
-          <div class="field">
-            <label for="LAT_D">Latitude</label>
-            <input type="text" id="LAT_D" name="LAT_D" placeholder="e.g. 28.6139° N" />
-            <div class="hint">GPS latitude of hotel</div>
-          </div>
-          <div class="field">
-            <label for="LONG_D">Longitude</label>
-            <input type="text" id="LONG_D" name="LONG_D" placeholder="e.g. 77.2090° E" />
-            <div class="hint">GPS longitude of hotel</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 3: Clause 7.1.b Margins & Platform Fees -->
-      <div class="card" id="card3">
         <div class="section-title">
           <div class="icon">📄</div>Clause 7.1.b — Terms &amp; Margin Configuration
         </div>
@@ -1205,8 +1225,33 @@
             </div>
           </div>
 
+          <!-- OTA Rider prompt (every time ask to add if yes than add if no than not add) -->
+          <div class="clause-ota-box" id="clauseOtaBox">
+            <div class="clause-ota-line">
+              <div class="ota-prompt-text">
+                <span>Add <strong>OTA Rider</strong>?</span>
+                <span class="ota-prompt-sub">(Optional rider clause after Franchisor bookings)</span>
+              </div>
+              <div class="yn-group">
+                <button type="button" class="yn-btn yes" id="btnOtaYes" onclick="toggleOtaRider(true)">✓ Yes</button>
+                <button type="button" class="yn-btn no active" id="btnOtaNo" onclick="toggleOtaRider(false)">✗ No</button>
+              </div>
+            </div>
+
+            <div id="otaRiderInputContainer" class="clause-ota-input-row collapsed">
+              <div class="clause-margin-line" style="margin-bottom: 0;">
+                <span class="clause-margin-text">OTA Rider =</span>
+                <div>
+                  <input type="text" id="OTA_RIDER" name="OTA_RIDER" value="5%" placeholder="e.g. 5%" class="clause-inline-input" />
+                </div>
+              </div>
+              <span class="ota-help-text">💡 Added immediately after <em>"Reseller margin  on Franchisor Bookings = 25%"</em> in both contracts</span>
+            </div>
+          </div>
+          <input type="hidden" name="INCLUDE_OTA_RIDER" id="INCLUDE_OTA_RIDER" value="false" />
+
           <!-- Reseller margin on Franchisee Bookings -->
-          <div class="clause-margin-line">
+          <div class="clause-margin-line" style="margin-top: 14px;">
             <span class="clause-margin-text">Reseller margin on Franchisee Bookings=</span>
             <div>
               <input type="text" id="RESELLER_MARGIN_FRANCHISEE" name="RESELLER_MARGIN_FRANCHISEE" value="0%" placeholder="0%" class="clause-inline-input" required />
@@ -1261,6 +1306,42 @@
             <div class="table-footer-hint">
               💡 <span>All values are manually entered. Cell formatting and multi-line values (e.g. "+GST") directly match the contract template.</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Hotel Details -->
+      <div class="card" id="card3">
+        <div class="section-title">
+          <div class="icon">🏨</div>Hotel Details
+        </div>
+        <div class="grid grid-2" style="margin-bottom:18px;">
+          <div class="field">
+            <label for="HOTEL_NAME">Hotel Name <span class="req">*</span></label>
+            <input type="text" id="HOTEL_NAME" name="HOTEL_NAME" placeholder="Hotel / property name" required />
+          </div>
+          <div class="field">
+            <label for="INVENTRY">Inventory (Rooms) <span class="req">*</span></label>
+            <input type="number" id="INVENTRY" name="INVENTRY" placeholder="e.g. 50" min="1" required />
+          </div>
+        </div>
+        <div class="grid" style="margin-bottom:18px;">
+          <div class="field">
+            <label for="HOTEL_ADDRESS">Hotel Address <span class="req">*</span></label>
+            <textarea id="HOTEL_ADDRESS" name="HOTEL_ADDRESS" placeholder="Complete hotel address..."
+              required></textarea>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="LAT_D">Latitude</label>
+            <input type="text" id="LAT_D" name="LAT_D" placeholder="e.g. 28.6139° N" />
+            <div class="hint">GPS latitude of hotel</div>
+          </div>
+          <div class="field">
+            <label for="LONG_D">Longitude</label>
+            <input type="text" id="LONG_D" name="LONG_D" placeholder="e.g. 77.2090° E" />
+            <div class="hint">GPS longitude of hotel</div>
           </div>
         </div>
       </div>
@@ -1506,6 +1587,26 @@
       }
     }
 
+    // Clause 7.1.b OTA Rider toggle
+    function toggleOtaRider(enable) {
+      document.getElementById('INCLUDE_OTA_RIDER').value = enable ? 'true' : 'false';
+      document.getElementById('btnOtaYes').classList.toggle('active', enable);
+      document.getElementById('btnOtaNo').classList.toggle('active', !enable);
+      const container = document.getElementById('otaRiderInputContainer');
+      if (container) {
+        if (enable) {
+          container.classList.remove('collapsed');
+          const input = document.getElementById('OTA_RIDER');
+          if (input && !input.value.trim()) {
+            input.value = '5%';
+          }
+          if (input) input.focus();
+        } else {
+          container.classList.add('collapsed');
+        }
+      }
+    }
+
     // Format switching logic (GST vs NGST)
     function selectFormat(type) {
       const isNGST = type === 'NGST';
@@ -1520,7 +1621,7 @@
       // Update headings and notes
       document.getElementById('mainHeading').textContent = isNGST ? 'Non-GST (NGST) Contract Form' : 'GST Contract Form';
       document.getElementById('card1Title').innerHTML = '<div class="icon">📋</div>' + (isNGST ? 'PAN, Aadhaar &amp; Owner Details' : 'GST &amp; Owner Details');
-      document.getElementById('step1Label').textContent = isNGST ? 'PAN Info' : 'GST Info';
+      document.getElementById('step1Label').textContent = isNGST ? 'PAN & Aadhaar' : 'GST & Owner';
       document.getElementById('currentTemplateLabel').textContent = isNGST ? 'Form_NGST.docx (PAN & Aadhaar)' : 'Form_GST.docx (with GSTIN)';
       document.getElementById('submitHint').innerHTML = 'All details will be inserted into your <strong>' + (isNGST ? 'Form_NGST.docx' : 'Form_GST.docx') + '</strong> template';
 
@@ -1528,35 +1629,32 @@
       const groupGstNo = document.getElementById('groupGstNo');
       const groupGstAddr = document.getElementById('groupGstAddr');
       const groupPanNo = document.getElementById('groupPanNo');
-      const groupNgstAddrs = document.getElementById('groupNgstAddrs');
+      const groupAdharAddr = document.getElementById('groupAdharAddr');
 
       const gstNoInput = document.getElementById('GST_NO');
       const gstAddrInput = document.getElementById('GST_ADDRESS');
       const panNoInput = document.getElementById('PAN_NO');
-      const panAddrInput = document.getElementById('PAN_ADDRESS');
       const adharAddrInput = document.getElementById('ADHAR_ADDRESS');
 
       if (isNGST) {
         groupGstNo.classList.add('hidden-field-group');
         groupGstAddr.classList.add('hidden-field-group');
         groupPanNo.classList.remove('hidden-field-group');
-        groupNgstAddrs.classList.remove('hidden-field-group');
+        groupAdharAddr.classList.remove('hidden-field-group');
 
         gstNoInput.removeAttribute('required');
         gstAddrInput.removeAttribute('required');
         panNoInput.setAttribute('required', 'required');
-        panAddrInput.setAttribute('required', 'required');
         adharAddrInput.setAttribute('required', 'required');
       } else {
         groupGstNo.classList.remove('hidden-field-group');
         groupGstAddr.classList.remove('hidden-field-group');
         groupPanNo.classList.add('hidden-field-group');
-        groupNgstAddrs.classList.add('hidden-field-group');
+        groupAdharAddr.classList.add('hidden-field-group');
 
         gstNoInput.setAttribute('required', 'required');
         gstAddrInput.setAttribute('required', 'required');
         panNoInput.removeAttribute('required');
-        panAddrInput.removeAttribute('required');
         adharAddrInput.removeAttribute('required');
       }
 
