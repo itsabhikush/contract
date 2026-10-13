@@ -7,10 +7,22 @@
     "netlify/functions/Form_GST.docx",
     "netlify/functions/Form_NGST.docx",
     "Form_GST.docx",
-    "Form_NGST.docx"
+    "Form_NGST.docx",
+    "gstHelper.js",
+    "netlify/functions/gstHelper.js"
   ]
 
 [[redirects]]
   from = "/generate"
   to = "/.netlify/functions/generate"
+  status = 200
+
+[[redirects]]
+  from = "/api/gst-captcha"
+  to = "/.netlify/functions/gst-captcha"
+  status = 200
+
+[[redirects]]
+  from = "/api/gst-search"
+  to = "/.netlify/functions/gst-search"
   status = 200

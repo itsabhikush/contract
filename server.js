@@ -3,11 +3,38 @@ const path = require('path');
 const fs = require('fs');
 const PizZip = require('pizzip');
 const multer = require('multer');
+const { fetchGstCaptcha, searchGstTaxpayer } = require('./gstHelper');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/gst-captcha', async (req, res) => {
+  try {
+    const data = await fetchGstCaptcha();
+    res.json({ success: true, ...data });
+  } catch (err) {
+    console.error('Error fetching GST captcha:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to fetch captcha from GST portal' });
+  }
+});
+
+app.post('/api/gst-search', async (req, res) => {
+  try {
+    const { gstin, captcha, sessionId } = req.body || {};
+    if (!gstin || !captcha || !sessionId) {
+      return res.status(400).json({ success: false, error: 'Missing GSTIN, Captcha, or Session ID' });
+    }
+    const result = await searchGstTaxpayer(gstin, captcha, sessionId);
+    res.json(result);
+  } catch (err) {
+    console.error('Error querying GST taxpayer:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to query GST portal' });
+  }
+});
 
 function getTemplatePath(contractType) {
   const filename = contractType === 'NGST' ? 'Form_NGST.docx' : 'Form_GST.docx';
