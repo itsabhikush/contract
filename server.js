@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const PizZip = require('pizzip');
 const multer = require('multer');
-const { fetchGstCaptcha, searchGstTaxpayer } = require('./gstHelper');
+const { fetchGstCaptcha, searchGstTaxpayer, searchGstByPan } = require('./gstHelper');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -33,6 +33,20 @@ app.post('/api/gst-search', async (req, res) => {
   } catch (err) {
     console.error('Error querying GST taxpayer:', err);
     res.status(500).json({ success: false, error: err.message || 'Failed to query GST portal' });
+  }
+});
+
+app.post('/api/pan-search', async (req, res) => {
+  try {
+    const { pan, captcha, sessionId } = req.body || {};
+    if (!pan || !captcha || !sessionId) {
+      return res.status(400).json({ success: false, error: 'Missing PAN, Captcha, or Session ID' });
+    }
+    const result = await searchGstByPan(pan, captcha, sessionId);
+    res.json(result);
+  } catch (err) {
+    console.error('Error querying GST taxpayer by PAN:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to query GST portal by PAN' });
   }
 });
 

@@ -1556,6 +1556,186 @@
       background: rgba(108, 99, 255, 0.4);
       border-radius: 3px;
     }
+    .btn-check-pan {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.22) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fef3c7;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+    }
+
+    .btn-check-pan:hover {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border-color: transparent;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .pan-modal-dialog {
+      max-width: 660px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .pan-modal-input-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .pan-results-container {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .pan-results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pan-results-header h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .pan-instruction-box {
+      background: rgba(108, 99, 255, 0.12);
+      border: 1px solid rgba(108, 99, 255, 0.35);
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-size: 13px;
+      color: #c4b5fd;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .pan-table-wrapper {
+      border-radius: 10px;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(13, 21, 38, 0.6);
+      margin-bottom: 14px;
+    }
+
+    .pan-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .pan-table th {
+      background: rgba(108, 99, 255, 0.14);
+      color: var(--accent2);
+      padding: 11px 14px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pan-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: middle;
+    }
+
+    .pan-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pan-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .gstin-link-btn {
+      background: rgba(108, 99, 255, 0.15);
+      border: 1px solid rgba(108, 99, 255, 0.35);
+      color: #c4b5fd;
+      font-family: 'Outfit', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .gstin-link-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+    }
+
+    .btn-select-gstin {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-select-gstin:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    .pan-notfound-card {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: 12px;
+      padding: 20px 22px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .pan-notfound-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .pan-notfound-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #6ee7b7;
+      margin-bottom: 6px;
+    }
+
+    .pan-notfound-desc {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
 </head>
 
@@ -1663,8 +1843,20 @@
 
           <!-- PAN Number (NGST only) -->
           <div class="field field-group hidden-field-group" id="groupPanNo">
-            <label for="PAN_NO">PAN Number <span class="req">*</span></label>
-            <input type="text" id="PAN_NO" name="PAN_NO" placeholder="e.g. ABCDE1234F" maxlength="10" />
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+              <label for="PAN_NO" style="margin-bottom: 0;">PAN Number <span class="req">*</span></label>
+              <a href="https://services.gst.gov.in/services/searchtpbypan" target="_blank" rel="noopener noreferrer" class="gst-portal-link" title="Open official GST Portal Search Taxpayer by PAN">
+                GST Portal Search by PAN ↗
+              </a>
+            </div>
+            <div class="gst-input-wrapper">
+              <input type="text" id="PAN_NO" name="PAN_NO" placeholder="e.g. ABCDE1234F" maxlength="10" />
+              <button type="button" class="btn-verify-gst btn-check-pan" id="btnCheckPan" title="Check if any GST is registered under this PAN (services.gst.gov.in/services/searchtpbypan)">
+                <span>🔍</span>
+                <span>Check GST by PAN</span>
+              </button>
+            </div>
+            <div class="gst-status-banner" id="panStatusBanner"></div>
           </div>
         </div>
 
@@ -2027,6 +2219,72 @@
           <div class="spinner" id="gstVerifySpinner"></div>
           <span class="btn-text">Verify &amp; Check Status</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Taxpayer by PAN Modal -->
+  <div class="gst-modal-backdrop" id="panModalBackdrop">
+    <div class="gst-modal pan-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="panModalTitle">
+      <div class="gst-modal-header">
+        <div class="gst-modal-header-text">
+          <div class="gst-modal-badge" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.35); color: #fbbf24;">
+            <span>🏛️</span> Official GST Portal Search
+          </div>
+          <h3 id="panModalTitle">Search Taxpayer by PAN</h3>
+          <p class="gst-modal-sub">
+            Source: <a href="https://services.gst.gov.in/services/searchtpbypan" target="_blank" rel="noopener noreferrer">services.gst.gov.in/services/searchtpbypan</a>
+          </p>
+        </div>
+        <button type="button" class="gst-modal-close" id="btnClosePanModalX" title="Close">✕</button>
+      </div>
+
+      <div class="gst-modal-body">
+        <div class="pan-modal-input-grid">
+          <div class="field" style="margin-bottom: 4px;">
+            <label for="panModalInput" class="gst-captcha-label">
+              Permanent Account Number (PAN) <span class="req">*</span>
+            </label>
+            <input type="text" id="panModalInput" class="form-control" maxlength="10" placeholder="e.g. CIDPG3591D" autocomplete="off" style="text-transform: uppercase; font-family: 'Outfit', monospace; font-size: 15px; letter-spacing: 0.08em;" />
+          </div>
+
+          <div class="gst-captcha-section">
+            <label for="panCaptchaInput" class="gst-captcha-label">
+              Enter the CAPTCHA code shown below <span class="req">*</span>
+            </label>
+            
+            <div class="gst-captcha-img-row">
+              <div class="gst-captcha-box" id="panCaptchaImgBox">
+                <div class="spinner" id="panCaptchaSpinner" style="display:block;"></div>
+                <img id="panCaptchaImg" src="" alt="PAN GST Captcha" style="display:none;" />
+              </div>
+              <button type="button" class="btn-refresh-captcha" id="btnRefreshPanCaptcha" title="Get a new Captcha">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                Refresh
+              </button>
+            </div>
+
+            <input type="text" id="panCaptchaInput" class="gst-captcha-input" maxlength="8" placeholder="Enter Captcha code" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="gst-modal-msg" id="panModalMsg"></div>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+          <button type="button" class="btn-modal-verify" id="btnSubmitPanSearch">
+            <div class="spinner" id="panSearchSpinner"></div>
+            <span class="btn-text">🔍 Search GST by PAN</span>
+          </button>
+        </div>
+
+        <!-- Results Area -->
+        <div id="panResultsContainer" class="pan-results-container" style="display:none;"></div>
+      </div>
+
+      <div class="gst-modal-footer">
+        <button type="button" class="btn-modal-cancel" id="btnClosePanModal">Cancel / Close</button>
       </div>
     </div>
   </div>
@@ -2585,6 +2843,361 @@
       });
     }
 
+    // ── Search Taxpayer by PAN (services.gst.gov.in/services/searchtpbypan) ────
+    let panCaptchaSessionId = null;
+
+    const panModalBackdrop = document.getElementById('panModalBackdrop');
+    const panModalInput = document.getElementById('panModalInput');
+    const panCaptchaImg = document.getElementById('panCaptchaImg');
+    const panCaptchaSpinner = document.getElementById('panCaptchaSpinner');
+    const panCaptchaInput = document.getElementById('panCaptchaInput');
+    const panModalMsg = document.getElementById('panModalMsg');
+    const btnSubmitPanSearch = document.getElementById('btnSubmitPanSearch');
+    const panResultsContainer = document.getElementById('panResultsContainer');
+    const panStatusBanner = document.getElementById('panStatusBanner');
+    const btnCheckPan = document.getElementById('btnCheckPan');
+
+    function showPanModalMsg(text, type = 'error') {
+      if (!panModalMsg) return;
+      panModalMsg.textContent = text;
+      panModalMsg.className = 'gst-modal-msg ' + type + ' visible';
+    }
+
+    function hidePanModalMsg() {
+      if (!panModalMsg) return;
+      panModalMsg.textContent = '';
+      panModalMsg.className = 'gst-modal-msg';
+    }
+
+    async function loadPanCaptcha() {
+      if (panCaptchaImg) panCaptchaImg.style.display = 'none';
+      if (panCaptchaSpinner) panCaptchaSpinner.style.display = 'block';
+      if (panCaptchaInput) panCaptchaInput.value = '';
+      hidePanModalMsg();
+
+      try {
+        const res = await fetch('/api/gst-captcha');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to fetch captcha');
+
+        panCaptchaSessionId = data.sessionId;
+        if (panCaptchaImg) {
+          panCaptchaImg.src = data.captchaImage;
+          panCaptchaImg.onload = () => {
+            if (panCaptchaSpinner) panCaptchaSpinner.style.display = 'none';
+            panCaptchaImg.style.display = 'block';
+            if (panCaptchaInput) panCaptchaInput.focus();
+          };
+        }
+      } catch (err) {
+        if (panCaptchaSpinner) panCaptchaSpinner.style.display = 'none';
+        showPanModalMsg('Failed to load CAPTCHA from GST portal: ' + err.message, 'error');
+      }
+    }
+
+    function openPanModal(prefillPan = '') {
+      const formPan = (prefillPan || document.getElementById('PAN_NO').value || '').trim().toUpperCase();
+      if (panModalInput) {
+        panModalInput.value = formPan;
+      }
+      if (panResultsContainer) {
+        panResultsContainer.style.display = 'none';
+        panResultsContainer.innerHTML = '';
+      }
+      hidePanModalMsg();
+      if (panModalBackdrop) panModalBackdrop.classList.add('open');
+      loadPanCaptcha();
+
+      if (!formPan && panModalInput) {
+        panModalInput.focus();
+      }
+    }
+
+    function closePanModal() {
+      if (panModalBackdrop) panModalBackdrop.classList.remove('open');
+      if (panCaptchaInput) panCaptchaInput.value = '';
+      hidePanModalMsg();
+      if (btnSubmitPanSearch) btnSubmitPanSearch.classList.remove('loading');
+    }
+
+    async function submitPanSearch() {
+      const panVal = (panModalInput ? panModalInput.value : '').trim().toUpperCase();
+      const captchaVal = (panCaptchaInput ? panCaptchaInput.value : '').trim();
+
+      if (!panVal) {
+        showPanModalMsg('Please enter your 10-character PAN Number.', 'error');
+        if (panModalInput) panModalInput.focus();
+        return;
+      }
+
+      if (panVal.length !== 10) {
+        showPanModalMsg(`PAN must be exactly 10 characters (currently ${panVal.length}).`, 'error');
+        if (panModalInput) panModalInput.focus();
+        return;
+      }
+
+      if (!captchaVal) {
+        showPanModalMsg('Please enter the CAPTCHA code shown in the image.', 'error');
+        if (panCaptchaInput) panCaptchaInput.focus();
+        return;
+      }
+
+      if (!panCaptchaSessionId) {
+        showPanModalMsg('Captcha session expired. Please click Refresh.', 'error');
+        return;
+      }
+
+      if (btnSubmitPanSearch) btnSubmitPanSearch.classList.add('loading');
+      hidePanModalMsg();
+      if (panResultsContainer) {
+        panResultsContainer.style.display = 'none';
+        panResultsContainer.innerHTML = '';
+      }
+
+      try {
+        const response = await fetch('/api/pan-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pan: panVal,
+            captcha: captchaVal,
+            sessionId: panCaptchaSessionId
+          })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          showPanModalMsg(result.error || 'Search failed.', 'error');
+          if (result.isCaptchaError) {
+            await loadPanCaptcha();
+          }
+          return;
+        }
+
+        // Keep PAN number in sync with main form
+        const mainPanInput = document.getElementById('PAN_NO');
+        if (mainPanInput) mainPanInput.value = panVal;
+
+        if (panResultsContainer) {
+          panResultsContainer.style.display = 'block';
+
+          if (result.notFound || !result.gstinList || result.gstinList.length === 0) {
+            // Case 1: No GST found on this PAN -> Follow NGST format
+            panResultsContainer.innerHTML = `
+              <div class="pan-notfound-card">
+                <div class="pan-notfound-icon">📑</div>
+                <div class="pan-notfound-title">No GST Found for PAN : ${escapeHtml(panVal)}</div>
+                <div class="pan-notfound-desc">
+                  Official GST Portal search returned no registered GSTIN records for this PAN.
+                  You can safely proceed and follow the <strong>Non-GST (NGST) Contract Format</strong>.
+                </div>
+                <button type="button" class="btn-modal-verify" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);" onclick="proceedWithNgst('${escapeAttr(panVal)}')">
+                  ✓ Proceed with NGST Format
+                </button>
+              </div>
+            `;
+          } else {
+            // Case 2: One or more GSTIN found on this PAN -> Offer to select and switch to GST format
+            const list = result.gstinList;
+            panResultsContainer.innerHTML = `
+              <div class="pan-results-header">
+                <h4>Search Result based on PAN : <span style="color: var(--accent2);">${escapeHtml(panVal)}</span></h4>
+                <span class="gst-pill active" style="font-size: 12px; padding: 4px 12px;">${list.length} GSTIN${list.length > 1 ? 's' : ''} Found</span>
+              </div>
+              <div class="pan-instruction-box">
+                🏢 <strong>GST Found!</strong> Registration exists under this PAN.
+                Kindly <strong>click on any GST Number</strong> or click <strong>Select ➜</strong> to switch to the GST format and follow the GST contract format.
+              </div>
+              <div class="pan-table-wrapper">
+                <table class="pan-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align: center;">S. No.</th>
+                      <th>GSTIN / UIN</th>
+                      <th>GSTIN Status</th>
+                      <th>State</th>
+                      <th style="text-align: right; width: 100px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${list.map((item, idx) => `
+                      <tr>
+                        <td style="text-align: center; color: var(--muted); font-weight: 600;">${idx + 1}</td>
+                        <td>
+                          <button type="button" class="gstin-link-btn" onclick="selectGstFromPan('${escapeAttr(item.gstin)}', '${escapeAttr(item.stateName)}', '${escapeAttr(item.authStatus)}')" title="Click to use this GSTIN and move to GST format">
+                            <span>${escapeHtml(item.gstin)}</span>
+                            <span style="font-size: 11px; opacity: 0.8;">➜</span>
+                          </button>
+                        </td>
+                        <td>
+                          <span class="gst-pill ${item.authStatus.toLowerCase() === 'active' ? 'active' : 'warn'}">
+                            ${escapeHtml(item.authStatus)}
+                          </span>
+                        </td>
+                        <td style="color: var(--text); font-weight: 500;">${escapeHtml(item.stateName)}</td>
+                        <td style="text-align: right;">
+                          <button type="button" class="btn-select-gstin" onclick="selectGstFromPan('${escapeAttr(item.gstin)}', '${escapeAttr(item.stateName)}', '${escapeAttr(item.authStatus)}')">
+                            Select ➜
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+          }
+        }
+
+      } catch (err) {
+        showPanModalMsg('Network error: ' + (err.message || 'Failed to connect to GST search service'), 'error');
+      } finally {
+        if (btnSubmitPanSearch) btnSubmitPanSearch.classList.remove('loading');
+      }
+    }
+
+    // Called when user chooses a GSTIN from the PAN search results
+    function selectGstFromPan(gstin, stateName, authStatus) {
+      // 1. Switch format to GST
+      selectFormat('GST');
+
+      // 2. Set GST_NO field
+      const gstInput = document.getElementById('GST_NO');
+      if (gstInput) {
+        gstInput.value = gstin;
+        gstInput.classList.add('field-autofilled');
+        setTimeout(() => gstInput.classList.remove('field-autofilled'), 3000);
+      }
+
+      // 3. Close the PAN modal
+      closePanModal();
+
+      // 4. Update the GST status banner
+      const banner = document.getElementById('gstStatusBanner');
+      if (banner) {
+        const isActive = (authStatus || '').toLowerCase() === 'active';
+        banner.className = 'gst-status-banner success visible';
+        banner.innerHTML = `
+          <div class="gst-status-badge-row">
+            <span class="gst-pill active">✓ GSTIN Selected: ${escapeHtml(gstin)}</span>
+            <span class="gst-pill regular">State: ${escapeHtml(stateName)}</span>
+            <span class="gst-pill ${isActive ? 'active' : 'warn'}">Status: ${escapeHtml(authStatus || 'Active')}</span>
+          </div>
+          <div>Switched from PAN search to <strong>GST Contract Format</strong>. Following the GST format!</div>
+          <div style="margin-top: 6px; font-size: 11.5px; opacity: 0.9;">
+            💡 Click <strong>Verify GST</strong> to auto-fill Legal Name, Trade Name and Principal Address via official GST verification, or fill them directly.
+          </div>
+        `;
+      }
+
+      // 5. Toast notification
+      showToast(`Switched to GST format with GSTIN: ${gstin}`, 'success');
+
+      // 6. Smooth scroll to GST Number field
+      const groupGstNo = document.getElementById('groupGstNo');
+      if (groupGstNo) groupGstNo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Called when no GST found and user proceeds with NGST format
+    function proceedWithNgst(panVal) {
+      closePanModal();
+
+      const mainPanInput = document.getElementById('PAN_NO');
+      if (mainPanInput) {
+        mainPanInput.value = panVal;
+      }
+
+      const banner = document.getElementById('panStatusBanner');
+      if (banner) {
+        banner.className = 'gst-status-banner success visible';
+        banner.innerHTML = `
+          <div class="gst-status-badge-row">
+            <span class="gst-pill active">✓ GST Portal Verified</span>
+            <span class="gst-pill regular">Non-GST (NGST) Confirmed</span>
+          </div>
+          <div>No GST registration found for PAN: <strong>${escapeHtml(panVal)}</strong>. Following <strong>Non-GST (NGST) Format</strong>.</div>
+        `;
+      }
+
+      showToast(`No GST found on PAN ${panVal}. Following NGST format.`, 'success');
+    }
+
+    // Attach PAN Verification event listeners
+    if (btnCheckPan) {
+      btnCheckPan.addEventListener('click', () => {
+        openPanModal(document.getElementById('PAN_NO').value);
+      });
+    }
+
+    const btnRefreshPanCaptcha = document.getElementById('btnRefreshPanCaptcha');
+    if (btnRefreshPanCaptcha) {
+      btnRefreshPanCaptcha.addEventListener('click', loadPanCaptcha);
+    }
+
+    const btnClosePanModal = document.getElementById('btnClosePanModal');
+    if (btnClosePanModal) {
+      btnClosePanModal.addEventListener('click', closePanModal);
+    }
+
+    const btnClosePanModalX = document.getElementById('btnClosePanModalX');
+    if (btnClosePanModalX) {
+      btnClosePanModalX.addEventListener('click', closePanModal);
+    }
+
+    if (panModalBackdrop) {
+      panModalBackdrop.addEventListener('click', e => {
+        if (e.target === panModalBackdrop) closePanModal();
+      });
+    }
+
+    if (btnSubmitPanSearch) {
+      btnSubmitPanSearch.addEventListener('click', submitPanSearch);
+    }
+
+    if (panCaptchaInput) {
+      panCaptchaInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitPanSearch();
+        }
+      });
+    }
+
+    if (panModalInput) {
+      panModalInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (panCaptchaInput && !panCaptchaInput.value) {
+            panCaptchaInput.focus();
+          } else {
+            submitPanSearch();
+          }
+        }
+      });
+      panModalInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+      });
+    }
+
+    const panNoInputEl = document.getElementById('PAN_NO');
+    if (panNoInputEl) {
+      panNoInputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          openPanModal(panNoInputEl.value);
+        }
+      });
+      panNoInputEl.addEventListener('input', () => {
+        const banner = document.getElementById('panStatusBanner');
+        if (banner) {
+          banner.className = 'gst-status-banner';
+          banner.innerHTML = '';
+        }
+      });
+    }
+
     // ── Form Reset Logic (Return to starting tab) ──────────────────────────────
     function resetFormToStart() {
       const form = document.getElementById('contractForm');
@@ -2643,11 +3256,16 @@
       const iForeign = document.getElementById('FOREIGNER');
       if (iForeign) iForeign.value = 'No';
 
-      // Clear GST verification banner & field highlight pulses
+      // Clear GST & PAN verification banner & field highlight pulses
       const gstBanner = document.getElementById('gstStatusBanner');
       if (gstBanner) {
         gstBanner.className = 'gst-status-banner';
         gstBanner.innerHTML = '';
+      }
+      const panBanner = document.getElementById('panStatusBanner');
+      if (panBanner) {
+        panBanner.className = 'gst-status-banner';
+        panBanner.innerHTML = '';
       }
       document.querySelectorAll('.field-autofilled').forEach(el => el.classList.remove('field-autofilled'));
 

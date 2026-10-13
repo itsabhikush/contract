@@ -26,3 +26,8 @@
   from = "/api/gst-search"
   to = "/.netlify/functions/gst-search"
   status = 200
+
+[[redirects]]
+  from = "/api/pan-search"
+  to = "/.netlify/functions/pan-search"
+  status = 200
