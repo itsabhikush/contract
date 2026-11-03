@@ -1,121 +1,55 @@
 const https = require('https');
 
-function fetchGstCaptcha() {
+const SANDBOX_API_KEY = process.env.SANDBOX_API_KEY || 'key_live_3a0f223b4ad04f9994e8b41296205e20';
+const SANDBOX_API_SECRET = process.env.SANDBOX_API_SECRET || 'secret_live_254b88a313454d73bfa156d449b1bb66';
+const SANDBOX_BASE_URL = 'https://api.sandbox.co.in';
+
+let cachedToken = null;
+let tokenExpiry = 0;
+
+/**
+ * Authenticate with Sandbox API and cache the JWT token for 23 hours.
+ */
+function getSandboxToken() {
+  if (cachedToken && Date.now() < tokenExpiry - 60000) {
+    return Promise.resolve(cachedToken);
+  }
+
   return new Promise((resolve, reject) => {
-    const req = https.request('https://services.gst.gov.in/services/captcha', {
-      method: 'GET',
+    const req = https.request(SANDBOX_BASE_URL + '/authenticate', {
+      method: 'POST',
       timeout: 10000,
       headers: {
-        'User-Agent': 'curl/8.7.1',
-        'Accept': '*/*'
+        'accept': 'application/json',
+        'x-api-key': SANDBOX_API_KEY,
+        'x-api-secret': SANDBOX_API_SECRET,
+        'x-api-version': '1.0.0',
+        'Content-Length': 0
       }
     }, res => {
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          return reject(new Error('GST Portal returned HTTP ' + res.statusCode));
-        }
-        const setCookies = res.headers['set-cookie'] || [];
-        const cookieHeader = setCookies.map(c => c.split(';')[0]).join('; ');
-        const imgBuffer = Buffer.concat(chunks);
-        const captchaImage = 'data:image/png;base64,' + imgBuffer.toString('base64');
-        const sessionId = Buffer.from(cookieHeader).toString('base64');
-        resolve({ captchaImage, sessionId });
-      });
-    });
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('GST Portal connection timed out.'));
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-function searchGstTaxpayer(gstin, captcha, sessionId) {
-  return new Promise((resolve, reject) => {
-    let cookieHeader = '';
-    try {
-      cookieHeader = Buffer.from(sessionId, 'base64').toString('utf8');
-    } catch {
-      return reject(new Error('Invalid or expired captcha session. Please refresh captcha.'));
-    }
-
-    const payload = JSON.stringify({
-      gstin: (gstin || '').trim().toUpperCase(),
-      captcha: (captcha || '').trim()
-    });
-
-    const req = https.request('https://services.gst.gov.in/services/api/search/taxpayerDetails', {
-      method: 'POST',
-      timeout: 12000,
-      headers: {
-        'User-Agent': 'curl/8.7.1',
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Content-Length': Buffer.byteLength(payload),
-        'Referer': 'https://services.gst.gov.in/services/searchtp',
-        'Origin': 'https://services.gst.gov.in',
-        'Cookie': cookieHeader
-      }
-    }, res => {
-      let data = '';
-      res.on('data', c => data += c);
+      let body = '';
+      res.on('data', d => body += d);
       res.on('end', () => {
         try {
-          const json = JSON.parse(data);
-          if (json.errorCode) {
-            if (json.errorCode === 'SWEB_9000') {
-              return resolve({
-                success: false,
-                error: 'Incorrect captcha code. Please try again.',
-                isCaptchaError: true
-              });
-            }
-            if (json.errorCode === 'SWEB_9035') {
-              return resolve({
-                success: false,
-                error: 'Invalid GSTIN / UIN. Please verify your 15-character GST number.',
-                isInvalidGstin: true
-              });
-            }
-            return resolve({
-              success: false,
-              error: `GST Portal Error (${json.errorCode}): ${json.message || 'Verification failed.'}`
-            });
+          const json = JSON.parse(body);
+          const token = json.access_token || (json.data && json.data.access_token);
+          if (token) {
+            cachedToken = token;
+            tokenExpiry = Date.now() + 23 * 3600 * 1000;
+            return resolve(token);
           }
-
-          // Build principal place of business address
-          let address = '';
-          if (json.pradr && json.pradr.adr) {
-            address = json.pradr.adr;
-          } else if (json.pradr && json.pradr.addr) {
-            const a = json.pradr.addr;
-            address = [a.bno, a.bnm, a.st, a.loc, a.dst, a.stcd, a.pncd].filter(Boolean).join(', ');
-          }
-
-          resolve({
-            success: true,
-            gstin: json.gstin || gstin,
-            sts: json.sts || '', // e.g. "Active"
-            dty: json.dty || '', // e.g. "Regular"
-            lgnm: json.lgnm || '', // Legal Name of Business
-            tradeNam: json.tradeNam || json.lgnm || '', // Trade Name
-            address: address, // Principle Place of Business
-            raw: json
-          });
-        } catch {
-          reject(new Error('Invalid response from GST Portal. Response: ' + data.slice(0, 100)));
+          reject(new Error(json.message || 'Failed to authenticate with Sandbox API'));
+        } catch (e) {
+          reject(new Error('Invalid response from Sandbox auth endpoint'));
         }
       });
     });
+
     req.on('timeout', () => {
       req.destroy();
-      reject(new Error('GST Portal search timed out.'));
+      reject(new Error('Sandbox authentication timed out'));
     });
     req.on('error', reject);
-    req.write(payload);
     req.end();
   });
 }
@@ -162,6 +96,184 @@ const GST_STATES = {
   "99": "CBIC"
 };
 
+/**
+ * Formats GST address into the exact official order as per Form GST REG-06 and GST Portal:
+ * 1. Floor Number (flno)
+ * 2. Building / Flat / Door Number (bno)
+ * 3. Name of Premises / Building (bnm)
+ * 4. Road / Street (st)
+ * 5. Locality / Sub-locality (locality)
+ * 6. Landmark (landMark)
+ * 7. City / Town / Village / Location (loc)
+ * 8. District (dst)
+ * 9. State Name (stcd)
+ * 10. PIN Code (pncd)
+ */
+function formatGstAddress(pradr) {
+  if (!pradr) return '';
+  if (typeof pradr === 'string') return pradr.trim();
+  if (pradr.adr && typeof pradr.adr === 'string' && pradr.adr.trim()) {
+    return pradr.adr.trim();
+  }
+
+  const a = pradr.addr || pradr;
+  if (!a || typeof a !== 'object') return '';
+
+  let stateName = a.stcd || '';
+  if (stateName && GST_STATES[stateName]) {
+    stateName = GST_STATES[stateName];
+  }
+
+  const parts = [
+    a.flno,
+    a.bno,
+    a.bnm,
+    a.st,
+    a.locality,
+    a.landMark,
+    a.loc,
+    a.dst,
+    stateName,
+    a.pncd
+  ];
+
+  const cleaned = [];
+  for (let part of parts) {
+    if (part === undefined || part === null) continue;
+    const s = String(part).trim();
+    if (!s) continue;
+    // Skip consecutive identical tokens
+    if (cleaned.length > 0 && cleaned[cleaned.length - 1].toLowerCase() === s.toLowerCase()) {
+      continue;
+    }
+    cleaned.push(s);
+  }
+
+  return cleaned.join(', ');
+}
+
+/**
+ * Verify GST taxpayer details using Sandbox.co.in API (no captcha required).
+ */
+async function searchGstTaxpayer(gstin) {
+  const cleanGstin = (gstin || '').trim().toUpperCase();
+  if (!cleanGstin || cleanGstin.length !== 15) {
+    return {
+      success: false,
+      error: 'GST Number must be exactly 15 characters.'
+    };
+  }
+
+  let token = await getSandboxToken();
+  const payload = JSON.stringify({ gstin: cleanGstin });
+
+  const executeRequest = (authToken) => {
+    return new Promise((resolve, reject) => {
+      const req = https.request(SANDBOX_BASE_URL + '/gst/compliance/public/gstin/search', {
+        method: 'POST',
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': authToken,
+          'x-api-key': SANDBOX_API_KEY,
+          'x-api-version': '1.0.0',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      }, res => {
+        let body = '';
+        res.on('data', d => body += d);
+        res.on('end', () => {
+          resolve({ statusCode: res.statusCode, body });
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error('GST verification timed out. Please try again.'));
+      });
+      req.on('error', reject);
+      req.write(payload);
+      req.end();
+    });
+  };
+
+  let response = await executeRequest(token);
+
+  // If token expired, refresh once and retry
+  if (response.statusCode === 401 || response.statusCode === 403) {
+    cachedToken = null;
+    token = await getSandboxToken();
+    response = await executeRequest(token);
+  }
+
+  try {
+    const json = JSON.parse(response.body);
+    if (response.statusCode !== 200) {
+      return {
+        success: false,
+        error: json.message || json.error || 'GSTIN verification failed.'
+      };
+    }
+
+    const tpData = (json.data && json.data.data) || json.data || json;
+    const address = formatGstAddress(tpData.pradr || (Array.isArray(tpData.adadr) && tpData.adadr[0]));
+
+    return {
+      success: true,
+      gstin: tpData.gstin || cleanGstin,
+      sts: tpData.sts || 'Active',
+      dty: tpData.dty || 'Regular',
+      lgnm: tpData.lgnm || '',
+      tradeNam: tpData.tradeNam || tpData.lgnm || '',
+      address: address,
+      ctb: tpData.ctb || '',
+      rgdt: tpData.rgdt || '',
+      raw: tpData
+    };
+  } catch (e) {
+    throw new Error('Failed to parse response from GST API: ' + response.body.slice(0, 100));
+  }
+}
+
+/**
+ * Legacy Captcha fetcher for PAN modal search (services.gst.gov.in)
+ */
+function fetchGstCaptcha() {
+  return new Promise((resolve, reject) => {
+    const req = https.request('https://services.gst.gov.in/services/captcha', {
+      method: 'GET',
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'curl/8.7.1',
+        'Accept': '*/*'
+      }
+    }, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        if (res.statusCode !== 200) {
+          return reject(new Error('GST Portal returned HTTP ' + res.statusCode));
+        }
+        const setCookies = res.headers['set-cookie'] || [];
+        const cookieHeader = setCookies.map(c => c.split(';')[0]).join('; ');
+        const imgBuffer = Buffer.concat(chunks);
+        const captchaImage = 'data:image/png;base64,' + imgBuffer.toString('base64');
+        const sessionId = Buffer.from(cookieHeader).toString('base64');
+        resolve({ captchaImage, sessionId });
+      });
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('GST Portal connection timed out.'));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/**
+ * Search GST by PAN via GST Portal
+ */
 function searchGstByPan(pan, captcha, sessionId) {
   return new Promise((resolve, reject) => {
     let cookieHeader = '';
@@ -275,4 +387,10 @@ function searchGstByPan(pan, captcha, sessionId) {
   });
 }
 
-module.exports = { fetchGstCaptcha, searchGstTaxpayer, searchGstByPan, GST_STATES };
+module.exports = {
+  fetchGstCaptcha,
+  searchGstTaxpayer,
+  searchGstByPan,
+  formatGstAddress,
+  GST_STATES
+};

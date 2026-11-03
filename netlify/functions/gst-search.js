@@ -16,15 +16,15 @@ exports.handler = async (event) => {
   }
   try {
     const body = JSON.parse(event.body || '{}');
-    const { gstin, captcha, sessionId } = body;
-    if (!gstin || !captcha || !sessionId) {
+    const { gstin } = body;
+    if (!gstin) {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, error: 'Missing GSTIN, Captcha, or Session ID' })
+        body: JSON.stringify({ success: false, error: 'Missing GSTIN' })
       };
     }
-    const result = await searchGstTaxpayer(gstin, captcha, sessionId);
+    const result = await searchGstTaxpayer(gstin);
     return {
       statusCode: 200,
       headers: {

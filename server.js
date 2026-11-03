@@ -24,15 +24,15 @@ app.get('/api/gst-captcha', async (req, res) => {
 
 app.post('/api/gst-search', async (req, res) => {
   try {
-    const { gstin, captcha, sessionId } = req.body || {};
-    if (!gstin || !captcha || !sessionId) {
-      return res.status(400).json({ success: false, error: 'Missing GSTIN, Captcha, or Session ID' });
+    const { gstin } = req.body || {};
+    if (!gstin) {
+      return res.status(400).json({ success: false, error: 'Missing GSTIN' });
     }
-    const result = await searchGstTaxpayer(gstin, captcha, sessionId);
+    const result = await searchGstTaxpayer(gstin);
     res.json(result);
   } catch (err) {
     console.error('Error querying GST taxpayer:', err);
-    res.status(500).json({ success: false, error: err.message || 'Failed to query GST portal' });
+    res.status(500).json({ success: false, error: err.message || 'Failed to query GST API' });
   }
 });
 

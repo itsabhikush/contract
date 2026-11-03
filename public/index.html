@@ -1157,6 +1157,29 @@
       transform: translateY(0);
     }
 
+    .btn-verify-gst.loading {
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .btn-verify-gst .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .btn-verify-gst.loading .spinner {
+      display: inline-block;
+    }
+
+    .btn-verify-gst.loading .btn-icon {
+      display: none;
+    }
+
     /* GST Status Banner */
     .gst-status-banner {
       margin-top: 10px;
@@ -1170,6 +1193,12 @@
 
     .gst-status-banner.visible {
       display: block;
+    }
+
+    .gst-status-banner.info {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
     }
 
     .gst-status-banner.success {
@@ -1833,9 +1862,10 @@
             </div>
             <div class="gst-input-wrapper">
               <input type="text" id="GST_NO" name="GST_NO" placeholder="e.g. 27AAACT2727Q1ZW" maxlength="15" required />
-              <button type="button" class="btn-verify-gst" id="btnVerifyGst" title="Verify on GST Portal (services.gst.gov.in) with Captcha">
-                <span>🔍</span>
-                <span>Verify GST</span>
+              <button type="button" class="btn-verify-gst" id="btnVerifyGst" title="Verify GSTIN directly and auto-fill details">
+                <div class="spinner" id="gstInlineSpinner"></div>
+                <span class="btn-icon">🔍</span>
+                <span class="btn-text">Verify GST</span>
               </button>
             </div>
             <div class="gst-status-banner" id="gstStatusBanner"></div>
@@ -2167,61 +2197,6 @@
     </form>
   </div>
 
-  <!-- GST Verification & Captcha Modal -->
-  <div class="gst-modal-backdrop" id="gstModalBackdrop">
-    <div class="gst-modal" role="dialog" aria-modal="true" aria-labelledby="gstModalTitle">
-      <div class="gst-modal-header">
-        <div class="gst-modal-header-text">
-          <div class="gst-modal-badge">
-            <span>🏛️</span> Official GST Portal Verification
-          </div>
-          <h3 id="gstModalTitle">Verify GSTIN / UIN</h3>
-          <p class="gst-modal-sub">
-            Source: <a href="https://services.gst.gov.in/services/searchtp" target="_blank" rel="noopener noreferrer">services.gst.gov.in/services/searchtp</a>
-          </p>
-        </div>
-        <button type="button" class="gst-modal-close" id="btnCloseGstModalX" title="Close">✕</button>
-      </div>
-
-      <div class="gst-modal-body">
-        <div class="gst-target-box">
-          <span class="gst-target-label">GSTIN / UIN:</span>
-          <strong class="gst-target-val" id="gstModalTargetGst">--</strong>
-        </div>
-
-        <div class="gst-captcha-section">
-          <label for="gstCaptchaInput" class="gst-captcha-label">
-            Enter the CAPTCHA code shown below <span class="req">*</span>
-          </label>
-          
-          <div class="gst-captcha-img-row">
-            <div class="gst-captcha-box" id="gstCaptchaImgBox">
-              <div class="spinner" id="gstCaptchaSpinner" style="display:block;"></div>
-              <img id="gstCaptchaImg" src="" alt="GST Captcha" style="display:none;" />
-            </div>
-            <button type="button" class="btn-refresh-captcha" id="btnRefreshCaptcha" title="Get a new Captcha">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-              </svg>
-              Refresh
-            </button>
-          </div>
-
-          <input type="text" id="gstCaptchaInput" class="gst-captcha-input" maxlength="8" placeholder="Enter Captcha code" autocomplete="off" />
-        </div>
-
-        <div class="gst-modal-msg" id="gstModalMsg"></div>
-      </div>
-
-      <div class="gst-modal-footer">
-        <button type="button" class="btn-modal-cancel" id="btnCloseGstModal">Cancel</button>
-        <button type="button" class="btn-modal-verify" id="btnSubmitGstVerify">
-          <div class="spinner" id="gstVerifySpinner"></div>
-          <span class="btn-text">Verify &amp; Check Status</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Search Taxpayer by PAN Modal -->
   <div class="gst-modal-backdrop" id="panModalBackdrop">
@@ -2604,57 +2579,8 @@
       }
     });
 
-    // ── GST Portal Verification & Captcha Logic ────────────────────────────────
-    let gstCaptchaSessionId = null;
-
-    const gstModalBackdrop = document.getElementById('gstModalBackdrop');
-    const gstCaptchaImg = document.getElementById('gstCaptchaImg');
-    const gstCaptchaSpinner = document.getElementById('gstCaptchaSpinner');
-    const gstCaptchaInput = document.getElementById('gstCaptchaInput');
-    const gstModalMsg = document.getElementById('gstModalMsg');
-    const btnSubmitGstVerify = document.getElementById('btnSubmitGstVerify');
-    const gstModalTargetGst = document.getElementById('gstModalTargetGst');
-
-    function showModalMsg(text, type = 'error') {
-      if (!gstModalMsg) return;
-      gstModalMsg.textContent = text;
-      gstModalMsg.className = 'gst-modal-msg ' + type + ' visible';
-    }
-
-    function hideModalMsg() {
-      if (!gstModalMsg) return;
-      gstModalMsg.textContent = '';
-      gstModalMsg.className = 'gst-modal-msg';
-    }
-
-    async function loadGstCaptcha() {
-      if (gstCaptchaImg) gstCaptchaImg.style.display = 'none';
-      if (gstCaptchaSpinner) gstCaptchaSpinner.style.display = 'block';
-      if (gstCaptchaInput) gstCaptchaInput.value = '';
-      hideModalMsg();
-
-      try {
-        const res = await fetch('/api/gst-captcha');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'Failed to fetch captcha');
-
-        gstCaptchaSessionId = data.sessionId;
-        if (gstCaptchaImg) {
-          gstCaptchaImg.src = data.captchaImage;
-          gstCaptchaImg.onload = () => {
-            if (gstCaptchaSpinner) gstCaptchaSpinner.style.display = 'none';
-            gstCaptchaImg.style.display = 'block';
-            if (gstCaptchaInput) gstCaptchaInput.focus();
-          };
-        }
-      } catch (err) {
-        if (gstCaptchaSpinner) gstCaptchaSpinner.style.display = 'none';
-        showModalMsg('Failed to load CAPTCHA from GST portal: ' + err.message, 'error');
-      }
-    }
-
-    function openGstModal() {
+    // ── GST Direct Verification Logic (No Captcha Required) ─────────────────────
+    async function verifyGstDirect() {
       const gstInput = document.getElementById('GST_NO');
       const val = (gstInput ? gstInput.value : '').trim().toUpperCase();
 
@@ -2670,56 +2596,35 @@
         return;
       }
 
-      if (gstModalTargetGst) gstModalTargetGst.textContent = val;
-      if (gstModalBackdrop) gstModalBackdrop.classList.add('open');
-      loadGstCaptcha();
-    }
+      const btnVerifyGst = document.getElementById('btnVerifyGst');
+      const banner = document.getElementById('gstStatusBanner');
 
-    function closeGstModal() {
-      if (gstModalBackdrop) gstModalBackdrop.classList.remove('open');
-      if (gstCaptchaInput) gstCaptchaInput.value = '';
-      hideModalMsg();
-      if (btnSubmitGstVerify) btnSubmitGstVerify.classList.remove('loading');
-    }
-
-    async function submitGstVerify() {
-      const gstInput = document.getElementById('GST_NO');
-      const gstin = (gstInput ? gstInput.value : '').trim().toUpperCase();
-      const captcha = (gstCaptchaInput ? gstCaptchaInput.value : '').trim();
-
-      if (!captcha) {
-        showModalMsg('Please enter the CAPTCHA code shown in the image.', 'error');
-        if (gstCaptchaInput) gstCaptchaInput.focus();
-        return;
+      if (btnVerifyGst) {
+        btnVerifyGst.classList.add('loading');
+        const textSpan = btnVerifyGst.querySelector('.btn-text');
+        if (textSpan) textSpan.textContent = 'Verifying...';
       }
 
-      if (!gstCaptchaSessionId) {
-        showModalMsg('Captcha session expired. Please click Refresh.', 'error');
-        return;
+      if (banner) {
+        banner.className = 'gst-status-banner info visible';
+        banner.innerHTML = `<span>⏳ Verifying GSTIN <strong>${escapeHtml(val)}</strong>...</span>`;
       }
-
-      if (btnSubmitGstVerify) btnSubmitGstVerify.classList.add('loading');
-      hideModalMsg();
 
       try {
         const response = await fetch('/api/gst-search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            gstin: gstin,
-            captcha: captcha,
-            sessionId: gstCaptchaSessionId
-          })
+          body: JSON.stringify({ gstin: val })
         });
 
         const result = await response.json();
 
         if (!result.success) {
-          showModalMsg(result.error || 'Verification failed.', 'error');
-          if (result.isCaptchaError) {
-            // Automatically reload captcha for user convenience
-            await loadGstCaptcha();
+          if (banner) {
+            banner.className = 'gst-status-banner warning visible';
+            banner.innerHTML = `⚠️ <strong>Verification Failed:</strong> ${escapeHtml(result.error || 'Invalid GST number')}`;
           }
+          showToast(result.error || 'GST verification failed', 'error');
           return;
         }
 
@@ -2729,108 +2634,79 @@
         const isStatusActive = status.toLowerCase() === 'active';
         const isTypeRegular = taxpayerType.toLowerCase() === 'regular';
 
-        const banner = document.getElementById('gstStatusBanner');
+        // Requirement:
+        // OWNER_NAME = Legal Name of Business
+        // TRADE_NAME = Trade Name
+        // GST_ADDRESS = Principle Place of Business (full exact same order address)
+        const ownerInput = document.getElementById('OWNER_NAME');
+        const tradeInput = document.getElementById('TRADE_NAME');
+        const addrInput = document.getElementById('GST_ADDRESS');
 
-        if (isStatusActive && isTypeRegular) {
-          // Requirement:
-          // OWNER_NAME = Legal Name of Business
-          // TRADE_NAME = Trade Name
-          // GST_ADDRESS = Principle Place of Business
-          const ownerInput = document.getElementById('OWNER_NAME');
-          const tradeInput = document.getElementById('TRADE_NAME');
-          const addrInput = document.getElementById('GST_ADDRESS');
+        if (result.lgnm && ownerInput) ownerInput.value = result.lgnm;
+        if (tradeInput) tradeInput.value = result.tradeNam || result.lgnm || '';
+        if (result.address && addrInput) addrInput.value = result.address;
 
-          if (result.lgnm && ownerInput) ownerInput.value = result.lgnm;
-          if (tradeInput) tradeInput.value = result.tradeNam || result.lgnm || '';
-          if (result.address && addrInput) addrInput.value = result.address;
-
-          [ownerInput, tradeInput, addrInput].forEach(el => {
-            if (el) {
-              el.classList.add('field-autofilled');
-              setTimeout(() => el.classList.remove('field-autofilled'), 3000);
-            }
-          });
-
-          if (banner) {
-            banner.className = 'gst-status-banner success visible';
-            banner.innerHTML = `
-              <div class="gst-status-badge-row">
-                <span class="gst-pill active">✓ Status: ${escapeHtml(status)}</span>
-                <span class="gst-pill regular">Type: ${escapeHtml(taxpayerType)}</span>
-              </div>
-              <div><strong>Legal Name:</strong> ${escapeHtml(result.lgnm || 'N/A')}</div>
-              <div><strong>Trade Name:</strong> ${escapeHtml(result.tradeNam || result.lgnm || 'N/A')}</div>
-              <div><strong>Principal Place of Business:</strong> ${escapeHtml(result.address || 'N/A')}</div>
-              <div style="margin-top: 5px; font-size: 11px; opacity: 0.9;">⚡ Auto-filled GST &amp; Owner Details. Other tabs can be entered manually.</div>
-            `;
+        [ownerInput, tradeInput, addrInput].forEach(el => {
+          if (el) {
+            el.classList.add('field-autofilled');
+            setTimeout(() => el.classList.remove('field-autofilled'), 3000);
           }
+        });
 
-          closeGstModal();
-          showToast('GST Verified: Active & Regular! Details auto-filled.', 'success');
-
-        } else {
-          // If not Active or not Regular: do NOT auto-fill, show clear alert
-          if (banner) {
-            banner.className = 'gst-status-banner warning visible';
-            banner.innerHTML = `
-              <div class="gst-status-badge-row">
-                <span class="gst-pill ${isStatusActive ? 'active' : 'warn'}">Status: ${escapeHtml(status || 'N/A')}</span>
-                <span class="gst-pill ${isTypeRegular ? 'regular' : 'warn'}">Type: ${escapeHtml(taxpayerType || 'N/A')}</span>
-              </div>
-              <div><strong>Legal Name:</strong> ${escapeHtml(result.lgnm || 'N/A')}</div>
-              <div style="margin-top: 5px; font-size: 12px;">⚠️ <strong>Notice:</strong> Auto-fill applies only when Status = <em>Active</em> and Taxpayer Type = <em>Regular</em>. Current status is <strong>${escapeHtml(status)}</strong> (${escapeHtml(taxpayerType)}). Other tabs and details must be entered manually.</div>
-            `;
-          }
-
-          closeGstModal();
-          showToast(`GSTIN Status: ${status} | Type: ${taxpayerType} (Not Active Regular)`, 'warning');
+        if (banner) {
+          const bannerClass = isStatusActive ? 'success' : 'warning';
+          banner.className = `gst-status-banner ${bannerClass} visible`;
+          banner.innerHTML = `
+            <div class="gst-status-badge-row">
+              <span class="gst-pill ${isStatusActive ? 'active' : 'warn'}">✓ Status: ${escapeHtml(status || 'Active')}</span>
+              <span class="gst-pill ${isTypeRegular ? 'regular' : 'warn'}">Type: ${escapeHtml(taxpayerType || 'Regular')}</span>
+            </div>
+            <div><strong>Legal Name:</strong> ${escapeHtml(result.lgnm || 'N/A')}</div>
+            <div><strong>Trade Name:</strong> ${escapeHtml(result.tradeNam || result.lgnm || 'N/A')}</div>
+            <div><strong>Principal Place of Business:</strong> ${escapeHtml(result.address || 'N/A')}</div>
+            <div style="margin-top: 5px; font-size: 11px; opacity: 0.9;">⚡ Auto-filled GST &amp; Owner Details with exact address.</div>
+          `;
         }
 
+        showToast(`GST Verified: ${status}! Details auto-filled.`, 'success');
+
       } catch (err) {
-        showModalMsg('Network error: ' + (err.message || 'Failed to connect to verification service'), 'error');
+        if (banner) {
+          banner.className = 'gst-status-banner warning visible';
+          banner.innerHTML = `⚠️ <strong>Connection Error:</strong> ${escapeHtml(err.message || 'Failed to verify')}`;
+        }
+        showToast('Failed to connect to verification service: ' + err.message, 'error');
       } finally {
-        if (btnSubmitGstVerify) btnSubmitGstVerify.classList.remove('loading');
+        if (btnVerifyGst) {
+          btnVerifyGst.classList.remove('loading');
+          const textSpan = btnVerifyGst.querySelector('.btn-text');
+          if (textSpan) textSpan.textContent = 'Verify GST';
+        }
       }
     }
 
     // Attach GST Verification event listeners
     const btnVerifyGst = document.getElementById('btnVerifyGst');
-    if (btnVerifyGst) btnVerifyGst.addEventListener('click', openGstModal);
-
-    const btnRefreshCaptcha = document.getElementById('btnRefreshCaptcha');
-    if (btnRefreshCaptcha) btnRefreshCaptcha.addEventListener('click', loadGstCaptcha);
+    if (btnVerifyGst) btnVerifyGst.addEventListener('click', verifyGstDirect);
 
     const btnCloseGstModal = document.getElementById('btnCloseGstModal');
-    if (btnCloseGstModal) btnCloseGstModal.addEventListener('click', closeGstModal);
+    if (btnCloseGstModal) btnCloseGstModal.addEventListener('click', () => {
+      const modal = document.getElementById('gstModalBackdrop');
+      if (modal) modal.classList.remove('open');
+    });
 
     const btnCloseGstModalX = document.getElementById('btnCloseGstModalX');
-    if (btnCloseGstModalX) btnCloseGstModalX.addEventListener('click', closeGstModal);
-
-    if (gstModalBackdrop) {
-      gstModalBackdrop.addEventListener('click', e => {
-        if (e.target === gstModalBackdrop) closeGstModal();
-      });
-    }
-
-    if (btnSubmitGstVerify) {
-      btnSubmitGstVerify.addEventListener('click', submitGstVerify);
-    }
-
-    if (gstCaptchaInput) {
-      gstCaptchaInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          submitGstVerify();
-        }
-      });
-    }
+    if (btnCloseGstModalX) btnCloseGstModalX.addEventListener('click', () => {
+      const modal = document.getElementById('gstModalBackdrop');
+      if (modal) modal.classList.remove('open');
+    });
 
     const gstNoInput = document.getElementById('GST_NO');
     if (gstNoInput) {
       gstNoInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          openGstModal();
+          verifyGstDirect();
         }
       });
       gstNoInput.addEventListener('input', () => {
